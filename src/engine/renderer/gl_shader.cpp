@@ -245,10 +245,10 @@ void GLShaderManager::UpdateShaderProgramUniformLocations( GLShader *shader, sha
 	size_t numUniformBlocks = shader->_uniformBlocks.size();
 
 	// create buffer for storing uniform locations
-	shaderProgram->uniformLocations = ( GLint * ) ri.Z_Malloc( sizeof( GLint ) * numUniforms );
+	shaderProgram->uniformLocations = new GLint[numUniforms]{};
 
 	// create buffer for uniform firewall
-	shaderProgram->uniformFirewall = ( byte * ) ri.Z_Malloc( uniformSize );
+	shaderProgram->uniformFirewall = new byte[uniformSize]{};
 
 	// update uniforms
 	for (GLUniform *uniform : shader->_uniforms)
@@ -258,7 +258,7 @@ void GLShaderManager::UpdateShaderProgramUniformLocations( GLShader *shader, sha
 
 	if( glConfig2.uniformBufferObjectAvailable ) {
 		// create buffer for storing uniform block indexes
-		shaderProgram->uniformBlockIndexes = ( GLuint * ) ri.Z_Malloc( sizeof( GLuint ) * numUniformBlocks );
+		shaderProgram->uniformBlockIndexes = new GLuint[numUniformBlocks]{};
 
 		// update uniform blocks
 		for (GLUniformBlock *uniformBlock : shader->_uniformBlocks)
@@ -755,7 +755,7 @@ std::string     GLShaderManager::BuildGPUShaderText( Str::StringRef mainShaderNa
 bool GLShaderManager::buildPermutation( GLShader *shader, int macroIndex, int deformIndex )
 {
 	std::string compileMacros;
-	int  startTime = ri.Milliseconds();
+	int  startTime = Sys::Milliseconds();
 	int  endTime;
 	size_t i = macroIndex + ( deformIndex << shader->_compileMacros.size() );
 
@@ -815,7 +815,7 @@ bool GLShaderManager::buildPermutation( GLShader *shader, int macroIndex, int de
 
 		GL_CheckErrors();
 
-		endTime = ri.Milliseconds();
+		endTime = Sys::Milliseconds();
 		_totalBuildTime += ( endTime - startTime );
 		return true;
 	}
@@ -960,9 +960,6 @@ void GLShaderManager::SaveShaderBinary( GLShader *shader, size_t programNum )
 {
 #ifdef GL_ARB_get_program_binary
 	GLint                 binaryLength;
-	GLuint                binarySize = 0;
-	byte                  *binary;
-	byte                  *binaryptr;
 	GLBinaryHeader        shaderHeader{}; // Zero init.
 	shaderProgram_t       *shaderProgram;
 
@@ -977,8 +974,6 @@ void GLShaderManager::SaveShaderBinary( GLShader *shader, size_t programNum )
 
 	shaderProgram = &shader->_shaderPrograms[ programNum ];
 
-	// find output size
-	binarySize += sizeof( shaderHeader );
 	glGetProgramiv( shaderProgram->program, GL_PROGRAM_BINARY_LENGTH, &binaryLength );
 
 	// The binary length may be 0 if there is an error.
@@ -987,15 +982,10 @@ void GLShaderManager::SaveShaderBinary( GLShader *shader, size_t programNum )
 		return;
 	}
 
-	binarySize += binaryLength;
-
-	binaryptr = binary = ( byte* )ri.Hunk_AllocateTempMemory( binarySize );
-
-	// reserve space for the header
-	binaryptr += sizeof( shaderHeader );
+	std::unique_ptr<byte[]> binary( new byte[binaryLength] );
 
 	// get the program binary and write it to the buffer
-	glGetProgramBinary( shaderProgram->program, binaryLength, nullptr, &shaderHeader.binaryFormat, binaryptr );
+	glGetProgramBinary( shaderProgram->program, binaryLength, nullptr, &shaderHeader.binaryFormat, binary.get() );
 
 	// set the header
 	shaderHeader.version = GL_SHADER_VERSION;
@@ -1010,13 +1000,14 @@ void GLShaderManager::SaveShaderBinary( GLShader *shader, size_t programNum )
 	shaderHeader.checkSum = shader->_checkSum;
 	shaderHeader.driverVersionHash = _driverVersionHash;
 
-	// write the header to the buffer
-	memcpy(binary, &shaderHeader, sizeof( shaderHeader ) );
-
 	auto fileName = Str::Format("glsl/%s/%s_%u.bin", shader->GetName(), shader->GetName(), (unsigned int)programNum);
-	ri.FS_WriteFile(fileName.c_str(), binary, binarySize);
-
-	ri.Hunk_FreeTempMemory( binary );
+	try {
+		FS::File file = FS::HomePath::OpenWrite(fileName);
+		file.Write(&shaderHeader, sizeof(shaderHeader));
+		file.Write(binary.get(), binaryLength);
+	} catch (const std::system_error& err) {
+		Log::Notice("Failed to cache shader binary %s: %s", fileName, err.what());
+	}
 #endif
 }
 
@@ -1178,20 +1169,17 @@ GLuint GLShaderManager::CompileShader( Str::StringRef programName,
 
 void GLShaderManager::PrintShaderSource( Str::StringRef programName, GLuint object ) const
 {
-	char        *dump;
 	int         maxLength = 0;
 
 	glGetShaderiv( object, GL_SHADER_SOURCE_LENGTH, &maxLength );
 
-	dump = ( char * ) ri.Hunk_AllocateTempMemory( maxLength );
-
-	glGetShaderSource( object, maxLength, &maxLength, dump );
+	std::string src;
+	src.resize(maxLength);
+	glGetShaderSource( object, maxLength, &maxLength, &src[0] );
+	src.resize(maxLength);
 
 	std::string buffer;
 	std::string delim("\n");
-	std::string src(dump);
-
-	ri.Hunk_FreeTempMemory( dump );
 
 	int i = 0;
 	size_t pos = 0;
@@ -1224,7 +1212,6 @@ void GLShaderManager::PrintShaderSource( Str::StringRef programName, GLuint obje
 
 void GLShaderManager::PrintInfoLog( GLuint object) const
 {
-	char        *msg;
 	int         maxLength = 0;
 	std::string msgText;
 
@@ -1242,24 +1229,24 @@ void GLShaderManager::PrintInfoLog( GLuint object) const
 		return;
 	}
 
-	msg = ( char * ) ri.Hunk_AllocateTempMemory( maxLength );
+	std::string msg;
+	msg.resize(maxLength);
 
 	if ( glIsShader( object ) )
 	{
-		glGetShaderInfoLog( object, maxLength, &maxLength, msg );
+		glGetShaderInfoLog( object, maxLength, &maxLength, &msg[0] );
 		msgText = "Compile log:";
 	}
 	else if ( glIsProgram( object ) )
 	{
-		glGetProgramInfoLog( object, maxLength, &maxLength, msg );
+		glGetProgramInfoLog( object, maxLength, &maxLength, &msg[0] );
 		msgText = "Link log:";
 	}
+	msg.resize(maxLength);
 	if (maxLength > 0)
 		msgText += '\n';
 	msgText += msg;
 	Log::Warn(msgText);
-
-	ri.Hunk_FreeTempMemory( msg );
 }
 
 void GLShaderManager::LinkProgram( GLuint program ) const
@@ -2196,4 +2183,225 @@ void GLShader_fxaa::SetShaderProgramUniforms( shaderProgram_t *shaderProgram )
 void GLShader_fxaa::BuildShaderFragmentLibNames( std::string& fragmentInlines )
 {
 	fragmentInlines += "fxaa3_11";
+}
+
+void GL_BindProgram( shaderProgram_t *program )
+{
+	if ( !program )
+	{
+		GL_BindNullProgram();
+		return;
+	}
+
+	if ( glState.currentProgram != program )
+	{
+		glUseProgram( program->program );
+		glState.currentProgram = program;
+	}
+}
+
+void GL_BindNullProgram()
+{
+	if ( r_logFile->integer )
+	{
+		GLimp_LogComment( "--- GL_BindNullProgram ---\n" );
+	}
+
+	if ( glState.currentProgram )
+	{
+		glUseProgram( 0 );
+		glState.currentProgram = nullptr;
+	}
+}
+
+static void GLSL_InitGPUShadersOrError()
+{
+	// make sure the render thread is stopped
+	R_SyncRenderThread();
+
+	GL_CheckErrors();
+
+	gl_shaderManager.InitDriverInfo();
+
+	// single texture rendering
+	gl_shaderManager.GenerateBuiltinHeaders();
+	// single texture rendering
+	gl_shaderManager.load( gl_genericShader );
+
+	// standard light mapping
+	gl_shaderManager.load( gl_lightMappingShader );
+
+	// Deprecated forward renderer uses r_dynamicLight -1
+	if ( r_dynamicLight->integer < 0 )
+	{
+		// omni-directional specular bump mapping ( Doom3 style )
+		gl_shaderManager.load( gl_forwardLightingShader_omniXYZ );
+
+		// projective lighting ( Doom3 style )
+		gl_shaderManager.load( gl_forwardLightingShader_projXYZ );
+
+		// directional sun lighting ( Doom3 style )
+		gl_shaderManager.load( gl_forwardLightingShader_directionalSun );
+	}
+	else if ( r_dynamicLight->integer > 0 )
+	{
+		gl_shaderManager.load( gl_depthtile1Shader );
+		gl_shaderManager.load( gl_depthtile2Shader );
+		gl_shaderManager.load( gl_lighttileShader );
+	}
+
+#if !defined( GLSL_COMPILE_STARTUP_ONLY )
+
+	gl_shaderManager.load( gl_depthToColorShader );
+
+#endif // #if !defined(GLSL_COMPILE_STARTUP_ONLY)
+
+	// shadowmap distance compression
+	gl_shaderManager.load( gl_shadowFillShader );
+
+	if ( r_reflectionMapping->integer != 0 )
+	{
+		// bumped cubemap reflection for abitrary polygons ( EMBM )
+		gl_shaderManager.load( gl_reflectionShader );
+	}
+
+	// skybox drawing for abitrary polygons
+	gl_shaderManager.load( gl_skyboxShader );
+
+	// Q3A volumetric fog
+	gl_shaderManager.load( gl_fogQuake3Shader );
+
+	// global fog post process effect
+	gl_shaderManager.load( gl_fogGlobalShader );
+
+	// heatHaze post process effect
+	gl_shaderManager.load( gl_heatHazeShader );
+
+	// NOTE: screen shader seems to be only used by bloom post process effect.
+	if ( r_bloom->integer != 0 )
+	{
+		// screen post process effect
+		gl_shaderManager.load( gl_screenShader );
+	}
+
+	// portal process effect
+	gl_shaderManager.load( gl_portalShader );
+
+	// LDR bright pass filter
+	gl_shaderManager.load( gl_contrastShader );
+
+	// camera post process effect
+	gl_shaderManager.load( gl_cameraEffectsShader );
+
+	// gaussian blur
+	gl_shaderManager.load( gl_blurXShader );
+
+	gl_shaderManager.load( gl_blurYShader );
+
+	// debug utils
+	gl_shaderManager.load( gl_debugShadowMapShader );
+
+	if ( r_liquidMapping->integer != 0 )
+	{
+		gl_shaderManager.load( gl_liquidShader );
+	}
+
+#if !defined( GLSL_COMPILE_STARTUP_ONLY )
+
+	gl_shaderManager.load( gl_volumetricFogShader );
+
+#endif // #if !defined(GLSL_COMPILE_STARTUP_ONLY)
+
+	/* NOTE: motionblur is enabled by cg_motionblur which is a client cvar
+	so we have to build it in all cases. */
+	gl_shaderManager.load( gl_motionblurShader );
+
+	if (GLEW_ARB_texture_gather)
+	{
+		if (r_ssao->integer)
+		{
+			gl_shaderManager.load(gl_ssaoShader);
+		}
+	}
+	else
+	{
+		Log::Warn("SSAO not used because GL_ARB_texture_gather is not available.");
+	}
+
+	if ( r_FXAA->integer != 0 )
+	{
+		gl_shaderManager.load( gl_fxaaShader );
+	}
+
+	if ( !r_lazyShaders->integer )
+	{
+		gl_shaderManager.buildAll();
+	}
+}
+
+void GLSL_InitGPUShaders()
+{
+	/*
+	 Without a shaderpath option, the shader debugging cycle is like this:
+	 1. Change shader file(s).
+	 2. Run script to convert shader files into c++, storing them in shaders.cpp
+	 3. Recompile app to pickup the new shaders.cpp changes.
+	 4. Run the app and get to the point required to check work.
+	 5. If the change failed or succeeded but you want to make more changes restart at step 1.
+
+	 Alternatively, if set shaderpath "c:/unvanquished/main" is used, the cycle is:
+	 1. Change shader file(s) - don't run the buildshaders script unless samples.cpp is missing.
+	 2. Start the app, the app will load the shader files directly.
+	    If there is a problem the app will revert to the last working changes
+		in samples.cpp, so need to restart the app.
+	 3. Fix the problem shader files
+	 4. Do /glsl_restart at the app console to reload them. Repeat from step 3 as needed.
+
+	 Note that unv will respond by listing the files it thinks are different.
+	 If this matches your expectations then it's not an error.
+	 Note foward slashes (like those used in windows pathnames are processed
+	 as escape characters by the Unvanquished command processor,
+	 so use two forward slashes in that case.
+	 */
+
+	auto shaderPath = GetShaderPath();
+	if (shaderPath.empty())
+		shaderKind = ShaderKind::BuiltIn;
+	else
+		shaderKind = ShaderKind::External;
+
+	bool externalFailed = false;
+	if (shaderKind == ShaderKind::External)
+	{
+		try
+		{
+			Log::Warn("Loading external shaders.");
+			GLSL_InitGPUShadersOrError();
+			Log::Warn("External shaders in use.");
+		}
+		catch (const ShaderException& e)
+		{
+			Log::Warn("External shaders failed: %s", e.what());
+			Log::Warn("Attempting to use built in shaders instead.");
+			shaderKind = ShaderKind::BuiltIn;
+			externalFailed = true;
+		}
+	}
+
+	if (shaderKind == ShaderKind::BuiltIn)
+	{
+		// Let the user know if we are transitioning from external to
+		// built-in shaders. We won't alert them if we were already using
+		// built-in shaders as this is the normal case.
+		try
+		{
+			GLSL_InitGPUShadersOrError();
+		}
+		catch (const ShaderException&e)
+		{
+			Sys::Error("Built-in shaders failed: %s", e.what()); // Fatal.
+		};
+		if (externalFailed)
+			Log::Warn("Now using built-in shaders because external shaders failed.");
+	}
 }

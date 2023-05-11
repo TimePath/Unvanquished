@@ -1700,7 +1700,8 @@ struct netField_t
 #define STATS_GROUP_FIELD 99 // magic number in `bits` for 'int stats[16]' (but these ints must fit in a signed short)
 #define STATS_GROUP_NUM_STATS 16
 #define MAX_PLAYERSTATE_SIZE 600 // HACK: limit size
-#define PLAYERSTATE_FIELD_SIZE 4
+#define MAX_ENTITYSTATE_SIZE 300 // HACK: limit size
+#define NETCODE_FIELD_SIZE 4
 using NetcodeTable = std::vector<netField_t>;
 
 // playerState_t is the information needed by both the client and server
@@ -1908,17 +1909,12 @@ union OpaquePlayerState {
 
 	const char *Com_EntityTypeName(entityType_t entityType);
 
-	struct entityState_t
-	{
+union OpaqueEntityState {
+	byte storage[MAX_ENTITYSTATE_SIZE];
+	struct {
 		int          number; // entity index
 		entityType_t eType; // entityType_t
 		int          eFlags;
-
-		trajectory_t pos; // for calculating position
-		trajectory_t apos; // for calculating angles
-
-		int          time;
-		int          time2;
 
 		vec3_t       origin;
 		// this can be the point from where bullets are shot,
@@ -1928,41 +1924,14 @@ union OpaquePlayerState {
 		vec3_t       angles;
 		vec3_t       angles2;
 
-		int          otherEntityNum; // shotgun sources, etc
-		int          otherEntityNum2;
+		int          generic1;
 
-// FIXME: separate field, but doing this for compat reasons
-#define otherEntityNum3 groundEntityNum
-
-		int          groundEntityNum; // ENTITYNUM_NONE = in air
-
-		int          constantLight; // r + (g<<8) + (b<<16) + (intensity<<24)
-		int          loopSound; // constantly loop this sound
-
-		int          modelindex;
-		int          modelindex2;
 		int          clientNum; // 0 to (MAX_CLIENTS - 1), for players and corpses
-		int          frame;
+		int          otherEntityNum; // shotgun sources, etc
 
-		int          solid; // for client side prediction, trap_linkentity sets this properly
-
-		// old style events, in for compatibility only
-		int event; // impulse events -- muzzle flashes, footsteps, etc
-		int eventParm;
-
-		int eventSequence; // pmove generated events
-		int events[ MAX_EVENTS ];
-		int eventParms[ MAX_EVENTS ];
-
-		// for players
-		int weapon; // determines weapon and flash model, etc
-		int legsAnim; // mask off ANIM_TOGGLEBIT
-		int torsoAnim; // mask off ANIM_TOGGLEBIT
-
-		int           misc; // bit flags
-		int           generic1;
-		int           weaponAnim; // mask off ANIM_TOGGLEBIT
+		int END;
 	};
+};
 
 	enum class connstate_t
 	{

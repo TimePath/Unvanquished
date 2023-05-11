@@ -66,7 +66,7 @@ Writes a delta update of an entityState_t list to the message.
 */
 static void SV_EmitPacketEntities( const clientSnapshot_t *from, clientSnapshot_t *to, msg_t *msg )
 {
-	entityState_t *oldent, *newent;
+	OpaqueEntityState *oldent, *newent;
 	int           oldindex, newindex;
 	int           oldnum, newnum;
 	int           from_num_entities;
@@ -503,7 +503,7 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 
 		l = 0;
 
-		for ( i = 0; i < std::min(std::max(0, ent->r.numClusters), MAX_ENT_CLUSTERS); i++ )
+		for ( i = 0; i < Math::Clamp(ent->r.numClusters, 0, MAX_ENT_CLUSTERS); i++ )
 		{
 			l = ent->r.clusternums[ i ];
 
@@ -657,6 +657,8 @@ currently doesn't.
 For viewing through other player's eyes, clent can be something other than client->gentity
 =============
 */
+extern size_t entityStateSize;
+extern size_t playerStateSize;
 static void SV_BuildClientSnapshot( client_t *client )
 {
 	vec3_t                  org;
@@ -664,7 +666,7 @@ static void SV_BuildClientSnapshot( client_t *client )
 	snapshotEntityNumbers_t entityNumbers;
 	int                     i;
 	sharedEntity_t          *ent;
-	entityState_t           *state;
+	OpaqueEntityState *state;
 	svEntity_t              *svEnt;
 	sharedEntity_t          *clent;
 	int                     clientNum;
@@ -691,7 +693,7 @@ static void SV_BuildClientSnapshot( client_t *client )
 
 	// grab the current playerState_t
 	OpaquePlayerState* ps = SV_GameClientNum( client - svs.clients );
-	memcpy(&frame->ps, ps, sizeof(frame->ps));
+	memcpy(&frame->ps, ps, playerStateSize);
 
 	// never send client's own entity, because it can
 	// be regenerated from the playerstate
@@ -744,7 +746,7 @@ static void SV_BuildClientSnapshot( client_t *client )
 	{
 		ent = SV_GentityNum( entityNumbers.snapshotEntities[ i ] );
 		state = &svs.snapshotEntities[ svs.nextSnapshotEntities % svs.numSnapshotEntities ];
-		*state = ent->s;
+		memcpy(state, (const char*)&ent->s, entityStateSize);
 		svs.nextSnapshotEntities++;
 
 		// this should never hit, map should always be restarted first in SV_Frame

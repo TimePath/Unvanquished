@@ -1067,6 +1067,9 @@ void MaterialSystem::GenerateDepthImages( const int width, const int height, ima
 		mipmapWidth = mipmapWidth > 1 ? mipmapWidth >> 1 : 1;
 		mipmapHeight = mipmapHeight > 1 ? mipmapHeight >> 1 : 1;
 	}
+
+	depthImage->texture->GenBindlessImageHandle();
+	depthImage->texture->MakeImagesResident( GL_READ_WRITE );
 }
 
 void BindShaderNONE( Material* ) {
@@ -1612,8 +1615,12 @@ void MaterialSystem::DepthReduction() {
 	uint32_t globalWorkgroupX = ( width + 7 ) / 8;
 	uint32_t globalWorkgroupY = ( height + 7 ) / 8;
 
-	GL_Bind( tr.currentDepthImage );
-	glBindImageTexture( 2, depthImage->texnum, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F );
+	gl_depthReductionShader->SetUniform_DepthMapBindless( GL_BindToTMU( 0, tr.currentDepthImage ) );
+	// glBindImageTexture( 2, depthImage->texnum, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F );
+	// glUniformHandleui64ARB( 1, depthImage->texture->bindlessImageHandles[0] 
+	GL_CheckErrors();
+	glUniform2uiv( 1, 1, ( const GLuint* ) &depthImage->texture->bindlessImageHandles[0] );
+	GL_CheckErrors();
 
 	gl_depthReductionShader->SetUniform_InitialDepthLevel( true );
 	gl_depthReductionShader->SetUniform_ViewWidth( width );
@@ -1627,8 +1634,15 @@ void MaterialSystem::DepthReduction() {
 		globalWorkgroupX = ( width + 7 ) / 8;
 		globalWorkgroupY = ( height + 7 ) / 8;
 
-		glBindImageTexture( 1, depthImage->texnum, i, GL_FALSE, 0, GL_READ_ONLY, GL_R32F );
-		glBindImageTexture( 2, depthImage->texnum, i + 1, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F );
+		// glBindImageTexture( 1, depthImage->texnum, i, GL_FALSE, 0, GL_READ_ONLY, GL_R32F );
+		// glBindImageTexture( 2, depthImage->texnum, i + 1, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F );
+		// glUniformHandleui64ARB( 0, depthImage->texture->bindlessImageHandles[i] );
+		// glUniformHandleui64ARB( 1, depthImage->texture->bindlessImageHandles[i + 1] );
+		GL_CheckErrors();
+		glUniform2uiv( 0, 1, ( const GLuint* ) &depthImage->texture->bindlessImageHandles[i] );
+		GL_CheckErrors();
+		glUniform2uiv( 1, 1, ( const GLuint* ) &depthImage->texture->bindlessImageHandles[i + 1] );
+		GL_CheckErrors();
 
 		gl_depthReductionShader->SetUniform_InitialDepthLevel( false );
 		gl_depthReductionShader->SetUniform_ViewWidth( width );
@@ -1681,7 +1695,7 @@ void MaterialSystem::CullSurfaces() {
 		gl_cullShader->BindProgram( 0 );
 		uint32_t globalWorkGroupX = totalDrawSurfs % MAX_COMMAND_COUNTERS == 0 ?
 			totalDrawSurfs / MAX_COMMAND_COUNTERS : totalDrawSurfs / MAX_COMMAND_COUNTERS + 1;
-		GL_Bind( depthImage );
+		gl_cullShader->SetUniform_DepthMapBindless( GL_BindToTMU( 0, depthImage ) );
 		gl_cullShader->SetUniform_Frame( nextFrame );
 		gl_cullShader->SetUniform_ViewID( view );
 		gl_cullShader->SetUniform_TotalDrawSurfs( totalDrawSurfs );
@@ -1852,6 +1866,8 @@ void MaterialSystem::Free() {
 			portalView.count = 0;
 		}
 	}
+
+	depthImage->texture->MakeImagesNonResident();
 
 	currentFrame = 0;
 	nextFrame = 1;

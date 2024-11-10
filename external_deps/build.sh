@@ -600,9 +600,6 @@ build_freetype() {
 		-DFT_REQUIRE_HARFBUZZ=OFF \
 		-DFT_REQUIRE_PNG=OFF \
 		-DFT_REQUIRE_ZLIB=OFF
-
-	cp -a "${PREFIX}/include/freetype2" "${PREFIX}/include/freetype"
-	mv "${PREFIX}/include/freetype" "${PREFIX}/include/freetype2/freetype"
 }
 
 # Build OpenAL

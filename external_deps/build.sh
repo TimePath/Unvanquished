@@ -48,7 +48,7 @@ CXX='false'
 LD='ld'
 AR='ar'
 RANLIB='ranlib'
-SHARED_LIBS='OFF'
+LIBS_SHARED='OFF'
 CMAKE_TOOLCHAIN=''
 # Always reset flags, we heavily cross-compile and must not inherit any stray flag
 # from environment.
@@ -140,7 +140,7 @@ download_extract() {
 configure_build() {
 	local configure_args=(--disable-shared --enable-static)
 
-	if [ "${USE_SHARED}" = 'ON' ]
+	if [ "${LIBS_SHARED}" = 'ON' ]
 	then
 		configure_args=(--enable-shared --disable-static)
 	fi
@@ -166,7 +166,7 @@ cmake_build() {
 
 	cmake -S . -B build \
 		-DCMAKE_INSTALL_PREFIX="${PREFIX}" \
-		-DBUILD_SHARED_LIBS="${SHARED_LIBS}" \
+		-DBUILD_SHARED_LIBS="${LIBS_SHARED}" \
 		"${cmake_args[@]}" \
 		"${@}"
 
@@ -229,7 +229,7 @@ build_zlib() {
 
 	case "${PLATFORM}" in
 		windows-*-*)
-			zlib_cmake_args+=(-DBUILD_SHARED_LIBS=ON)
+			zlib_cmake_args+=(-DBUILD_LIBS_SHARED=ON)
 		;;
 	esac
 
@@ -543,7 +543,7 @@ build_jpeg() {
 	cd "${dir_name}"
 
 	cmake_build \
-		-DENABLE_SHARED="${SHARED_LIBS}" \
+		-DENABLE_SHARED="${LIBS_SHARED}" \
 		-DCMAKE_SYSTEM_NAME="${SYSTEM_NAME}" \
 		-DCMAKE_SYSTEM_PROCESSOR="${SYSTEM_PROCESSOR}" \
 		-DWITH_JPEG8=1
@@ -641,7 +641,7 @@ build_openal() {
 		cd "${dir_name}"
 
 		cmake_build \
-			-DBUILD_SHARED_LIBS=ON
+			-DBUILD_LIBS_SHARED=ON
 
 		install_name_tool -id "@rpath/libopenal.${OPENAL_VERSION}.dylib" "${PREFIX}/lib/libopenal.${OPENAL_VERSION}.dylib"
 		;;
@@ -1145,7 +1145,7 @@ common_setup_arch() {
 # the Windows build of Lua is only used in developer gamelogic builds, and Microsoft
 # supports %lld since Visual Studio 2013.
 common_setup_msvc() {
-	SHARED_LIBS='ON'
+	LIBS_SHARED='ON'
 	# Libtool bug prevents -static-libgcc from being set in LDFLAGS
 	CC="${HOST}-gcc -static-libgcc"
 	CXX="${HOST}-g++ -static-libgcc"

@@ -465,9 +465,6 @@ build_jpeg() {
 
 	cd "${dir_name}"
 	case "${PLATFORM}" in
-	windows-*-mingw)
-		jpeg_cmake_args+=(-DENABLE_SHARED=0)
-		;;
 	windows-*-msvc)
 		jpeg_cmake_args+=(-DENABLE_SHARED=1)
 		;;

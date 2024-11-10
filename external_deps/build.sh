@@ -486,7 +486,7 @@ build_png() {
 	cd "${dir_name}"
 
 	# The default -O2 is dropped when there's user-provided CFLAGS.
-	CFLAGS="${CFLAGS} -O2" configure_build
+	cmake_build
 }
 
 # Build JPEG

@@ -607,7 +607,7 @@ build_vorbis() {
 
 	cd "${dir_name}"
 
-	"${CMAKE_CONFIGURE[@]}" -DOPUS_BUILD_PROGRAMS=OFF -DOPUS_BUILD_TESTING=OFF
+	"${CMAKE_CONFIGURE[@]}"
 	cmake --build build
 	cmake --install build
 }

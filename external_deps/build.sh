@@ -314,6 +314,7 @@ build_curl() {
 	cd "${dir_name}"
 
 	cmake_build \
+		-DBUILD_CURL_EXE=OFF \
 		-DBUILD_TESTING=OFF \
 		-DCURL_ENABLE_SSL=OFF \
 		-DENABLE_THREADED_RESOLVER=OFF \

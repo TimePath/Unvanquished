@@ -723,10 +723,9 @@ build_opusfile() {
 	"${download_only}" && return
 
 	cd "${dir_name}"
+
 	# The default -O2 is dropped when there's user-provided CFLAGS.
 	CFLAGS="${CFLAGS} -O2" configure_build --disable-http
-	make
-	make install
 }
 
 # Build Lua

@@ -190,8 +190,15 @@ build_zlib() {
 
 	cd "${dir_name}"
 
-	# The default -O3 is dropped when there's user-provided CFLAGS.
-	"${CMAKE_CONFIGURE[@]}" -DCMAKE_CFLAGS="${CFLAGS} -DZLIB_CONST"
+	local zlib_cmake_args=(-DCMAKE_C_FLAGS="${CFLAGS} -DZLIB_CONST")
+
+	case "${PLATFORM}" in
+		windows-*-*)
+			zlib_cmake_args+=(-DBUILD_SHARED_LIBS=ON)
+		;;
+	esac
+
+	"${CMAKE_CONFIGURE[@]}" "${zlib_cmake_args[@]}"
 	cmake --build build
 	cmake --install build
 }
@@ -1279,7 +1286,8 @@ if [ "${#}" -lt "2" ]; then
 fi
 
 # Enable parallel build
-export MAKEFLAGS="-j`nproc 2> /dev/null || sysctl -n hw.ncpu 2> /dev/null || echo 1`"
+export CMAKE_BUILD_PARALLEL_LEVEL="$(nproc 2> /dev/null || sysctl -n hw.ncpu 2> /dev/null || echo 1)"
+export MAKEFLAGS="-j${CMAKE_BUILD_PARALLEL_LEVEL}"
 
 # Setup platform
 platform="${1}"; shift

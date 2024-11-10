@@ -50,6 +50,7 @@ AR='ar'
 RANLIB='ranlib'
 CONFIGURE_SHARED=(--disable-shared --enable-static)
 CMAKE_SHARED=(-DBUILD_SHARED_LIBS=OFF)
+CMAKE_TOOLCHAIN=''
 # Always reset flags, we heavily cross-compile and must not inherit any stray flag
 # from environment.
 CFLAGS=''
@@ -465,12 +466,10 @@ build_jpeg() {
 	cd "${dir_name}"
 	case "${PLATFORM}" in
 	windows-*-mingw)
-		jpeg_cmake_args+=(-DCMAKE_TOOLCHAIN_FILE="${SCRIPT_DIR}/../cmake/cross-toolchain-mingw${BITNESS}.cmake" \
-			-DENABLE_SHARED=0)
+		jpeg_cmake_args+=(-DENABLE_SHARED=0)
 		;;
 	windows-*-msvc)
-		jpeg_cmake_args+=(-DCMAKE_TOOLCHAIN_FILE="${SCRIPT_DIR}/../cmake/cross-toolchain-mingw${BITNESS}.cmake" \
-			-DENABLE_SHARED=1)
+		jpeg_cmake_args+=(-DENABLE_SHARED=1)
 		;;
 	*)
 		jpeg_cmake_args+=(-DENABLE_SHARED=0)
@@ -1013,8 +1012,10 @@ build_wipe() {
 # Common setup code
 common_setup() {
 	HOST="${2}"
+
 	"common_setup_${1}"
 	common_setup_arch
+
 	DOWNLOAD_DIR="${WORK_DIR}/download_cache"
 	PKG_BASEDIR="${PLATFORM}_${DEPS_VERSION}"
 	BUILD_BASEDIR="build-${PKG_BASEDIR}"
@@ -1025,13 +1026,21 @@ common_setup() {
 	PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig"
 	CPPFLAGS+=" -I${PREFIX}/include"
 	LDFLAGS+=" -L${PREFIX}/lib"
+
 	mkdir -p "${DOWNLOAD_DIR}"
 	mkdir -p "${PREFIX}/bin"
 	mkdir -p "${PREFIX}/include"
 	mkdir -p "${PREFIX}/lib"
+
 	CMAKE_CONFIGURE=(cmake -S . -B build -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
 		-DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_CXX_FLAGS="${CXXFLAGS}" \
 		"${CMAKE_SHARED[@]}" )
+
+	if [ -n "${CMAKE_TOOLCHAIN}" ]
+	then
+		CMAKE_CONFIGURE+=("${CMAKE_TOOLCHAIN}")
+	fi
+
 	export CC CXX LD AR RANLIB PKG_CONFIG PKG_CONFIG_PATH PATH CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
 }
 
@@ -1086,6 +1095,7 @@ common_setup_mingw() {
 	AR="${HOST}-ar"
 	RANLIB="${HOST}-ranlib"
 	CFLAGS+=' -D__USE_MINGW_ANSI_STDIO=0'
+	CMAKE_TOOLCHAIN="${SCRIPT_DIR}/../cmake/cross-toolchain-mingw${BITNESS}.cmake"
 }
 
 common_setup_macos() {

@@ -465,7 +465,7 @@ build_jpeg() {
 		-DENABLE_SHARED="${CMAKE_SHARED}" \
 		-DCMAKE_SYSTEM_NAME="${SYSTEM_NAME}" \
 		-DCMAKE_SYSTEM_PROCESSOR="${SYSTEM_PROCESSOR}" \
-		-DWITH_JPEG8=1)
+		-DWITH_JPEG8=1
 
 	cmake --build build
 	cmake --install build

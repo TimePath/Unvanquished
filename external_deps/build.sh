@@ -160,7 +160,8 @@ cmake_build() {
 	cmake -S . -B build \
 		-DCMAKE_INSTALL_PREFIX="${PREFIX}" \
 		-DBUILD_SHARED_LIBS="${CMAKE_SHARED}" \
-		"${cmake_args[@]}"
+		"${cmake_args[@]}" \
+		"${@}"
 
 	cmake --build build
 	cmake --install build

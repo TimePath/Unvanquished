@@ -780,11 +780,12 @@ build_ncurses() {
 	"${download_only}" && return
 
 	cd "${dir_name}"
+
 	# The default -O2 is dropped when there's user-provided CFLAGS.
 	# Configure terminfo search dirs based on the ones used in Debian. By default it will only look in (only) the install directory.
-	CFLAGS="${CFLAGS} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" --libdir="${PREFIX}/lib" --enable-widec "${CONFIGURE_SHARED[@]}" --with-terminfo-dirs=/etc/terminfo:/lib/terminfo --with-default-terminfo-dir=/usr/share/terminfo
-	make
-	make install
+	CFLAGS="${CFLAGS} -O2" configure_build \
+		--with-terminfo-dirs=/etc/terminfo:/lib/terminfo \
+		--with-default-terminfo-dir=/usr/share/terminfo
 }
 
 # "Builds" (downloads) the WASI SDK

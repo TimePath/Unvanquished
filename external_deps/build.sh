@@ -546,7 +546,6 @@ build_jpeg() {
 		-DCMAKE_SYSTEM_NAME="${SYSTEM_NAME}" \
 		-DCMAKE_SYSTEM_PROCESSOR="${SYSTEM_PROCESSOR}" \
 		-DWITH_JPEG8=1
-
 }
 
 # Build WebP

@@ -600,10 +600,10 @@ build_vorbis() {
 	"${download_only}" && return
 
 	cd "${dir_name}"
-	# The user-provided CFLAGS doesn't drop the default -O3
-	./configure --host="${HOST}" --prefix="${PREFIX}" --libdir="${PREFIX}/lib" "${CONFIGURE_SHARED[@]}" --disable-examples
-	make
-	make install
+
+	"${CMAKE_CONFIGURE[@]}" -DOPUS_BUILD_PROGRAMS=OFF -DOPUS_BUILD_TESTING=OFF
+	cmake --build build
+	cmake --install build
 }
 
 # Build Opus

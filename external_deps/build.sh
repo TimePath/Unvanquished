@@ -781,9 +781,8 @@ build_ncurses() {
 
 	cd "${dir_name}"
 
-	# The default -O2 is dropped when there's user-provided CFLAGS.
 	# Configure terminfo search dirs based on the ones used in Debian. By default it will only look in (only) the install directory.
-	CFLAGS="${CFLAGS} -O2" configure_build \
+	configure_build \
 		--with-terminfo-dirs=/etc/terminfo:/lib/terminfo \
 		--with-default-terminfo-dir=/usr/share/terminfo
 }

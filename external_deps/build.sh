@@ -558,7 +558,7 @@ build_openal() {
 	macos-*-*)
 		cd "${dir_name}"
 
-		"${CMAKE_CONFIGURE[@]}" -DBUILD_SHARED_LIBRS=ON
+		"${CMAKE_CONFIGURE[@]}" -DBUILD_SHARED_LIBS=ON
 		cmake --build build
 		cmake --install build
 

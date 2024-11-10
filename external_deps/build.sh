@@ -243,6 +243,7 @@ build_gmp() {
 	"${download_only}" && return
 
 	cd "${dir_name}"
+
 	case "${PLATFORM}" in
 	windows-*-msvc)
 		# Configure script gets confused if we override the compiler. Shouldn't
@@ -254,19 +255,20 @@ build_gmp() {
 		;;
 	esac
 
-	# The default -O2 is dropped when there's user-provided CFLAGS.
+	local gmp_configure_args=()
+
 	case "${PLATFORM}" in
 	macos-*-*)
 		# The assembler objects are incompatible with PIE
-		CFLAGS="${CFLAGS} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" --libdir="${PREFIX}/lib" "${CONFIGURE_SHARED[@]}" --disable-assembly
+		gmp_configure_args+=(--disable-assembly)
 		;;
 	*)
-		CFLAGS="${CFLAGS} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" --libdir="${PREFIX}/lib" "${CONFIGURE_SHARED[@]}"
 		;;
 	esac
 
-	make
-	make install
+	# The default -O2 is dropped when there's user-provided CFLAGS.
+	CFLAGS="${CFLAGS} -O2" configure_build "${gmp_configure_args[@]}"
+
 	case "${PLATFORM}" in
 	windows-*-msvc)
 		export CC="${CC_BACKUP}"
@@ -287,10 +289,9 @@ build_nettle() {
 	"${download_only}" && return
 
 	cd "${dir_name}"
+
 	# The default -O2 is dropped when there's user-provided CFLAGS.
-	CFLAGS="${CFLAGS} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" --libdir="${PREFIX}/lib" "${CONFIGURE_SHARED[@]}"
-	make
-	make install
+	CFLAGS="${CFLAGS} -O2" configure_build
 }
 
 # Build cURL
@@ -428,10 +429,9 @@ build_png() {
 	"${download_only}" && return
 
 	cd "${dir_name}"
+
 	# The default -O2 is dropped when there's user-provided CFLAGS.
-	CFLAGS="${CFLAGS} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" --libdir="${PREFIX}/lib" "${CONFIGURE_SHARED[@]}"
-	make
-	make install
+	CFLAGS="${CFLAGS} -O2" configure_build
 }
 
 # Build JPEG

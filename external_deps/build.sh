@@ -165,6 +165,7 @@ cmake_build() {
 	fi
 
 	cmake -S . -B build \
+		-DCMAKE_BUILD_TYPE='Release' \
 		-DCMAKE_INSTALL_PREFIX="${PREFIX}" \
 		-DBUILD_SHARED_LIBS="${LIBS_SHARED}" \
 		"${cmake_args[@]}" \

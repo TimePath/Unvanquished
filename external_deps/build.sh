@@ -138,6 +138,22 @@ download_extract() {
 	extract "${tarball_file}" "${extract_dir}"
 }
 
+cmake_build() {
+	local cmake_args=()
+	if [ -n "${CMAKE_TOOLCHAIN}" ]
+	then
+		cmake_args+=(-DCMAKE_TOOLCHAIN_FILE="${CMAKE_TOOLCHAIN}")
+	fi
+
+	cmake -S . -B build \
+		-DCMAKE_INSTALL_PREFIX="${PREFIX}" \
+		-DBUILD_SHARED_LIBS="${CMAKE_SHARED}" \
+		"${cmake_args[@]}"
+
+	cmake --build build
+	cmake --install build
+}
+
 # Build pkg-config
 build_pkgconfig() {
 	local dir_name="pkg-config-${PKGCONFIG_VERSION}"
@@ -198,9 +214,7 @@ build_zlib() {
 		;;
 	esac
 
-	"${CMAKE_CONFIGURE[@]}" "${zlib_cmake_args[@]}"
-	cmake --build build
-	cmake --install build
+	cmake_build "${zlib_cmake_args[@]}"
 }
 
 # Build GMP
@@ -344,9 +358,7 @@ build_sdl2() {
 	*)
 		cd "${dir_name}"
 
-		"${CMAKE_CONFIGURE[@]}"
-		cmake --build build
-		cmake --install build
+		cmake_build
 
 		# Workaround for an SDL2 CMake bug, we need to provide
 		# a bin/ directory even when nothing is used from it.
@@ -461,14 +473,12 @@ build_jpeg() {
 
 	cd "${dir_name}"
 
-	"${CMAKE_CONFIGURE[@]}" \
+	cmake_build \
 		-DENABLE_SHARED="${CMAKE_SHARED}" \
 		-DCMAKE_SYSTEM_NAME="${SYSTEM_NAME}" \
 		-DCMAKE_SYSTEM_PROCESSOR="${SYSTEM_PROCESSOR}" \
 		-DWITH_JPEG8=1
 
-	cmake --build build
-	cmake --install build
 }
 
 # Build WebP
@@ -485,7 +495,7 @@ build_webp() {
 
 	# WEBP_LINK_STATIC is ON by default
 
-	"${CMAKE_CONFIGURE[@]}" \
+	cmake_build \
 		-DWEBP_BUILD_ANIM_UTILS=OFF \
 		-DWEBP_BUILD_CWEBP=OFF \
 		-DWEBP_BUILD_DWEBP=OFF \
@@ -496,9 +506,6 @@ build_webp() {
 		-DWEBP_BUILD_VWEBP=OFF \
 		-DWEBP_BUILD_WEBPINFO=OFF \
 		-DWEBP_BUILD_WEBPMUX=OFF
-	
-	cmake --build build
-	cmake --install build
 }
 
 # Build FreeType
@@ -558,18 +565,15 @@ build_openal() {
 	macos-*-*)
 		cd "${dir_name}"
 
-		"${CMAKE_CONFIGURE[@]}" -DBUILD_SHARED_LIBS=ON
-		cmake --build build
-		cmake --install build
+		cmake_build \
+			-DBUILD_SHARED_LIBS=ON
 
 		install_name_tool -id "@rpath/libopenal.${OPENAL_VERSION}.dylib" "${PREFIX}/lib/libopenal.${OPENAL_VERSION}.dylib"
 		;;
 	*)
 		cd "${dir_name}"
 
-		"${CMAKE_CONFIGURE[@]}"
-		cmake --build build
-		cmake --install build
+		cmake_build
 		;;
 	esac
 }
@@ -590,9 +594,7 @@ build_ogg() {
 	cat <(echo '#include <stdint.h>') include/ogg/os_types.h > os_types.tmp
 	mv os_types.tmp include/ogg/os_types.h
 
-	"${CMAKE_CONFIGURE[@]}"
-	cmake --build build
-	cmake --install build
+	cmake_build
 }
 
 # Build Vorbis
@@ -607,9 +609,7 @@ build_vorbis() {
 
 	cd "${dir_name}"
 
-	"${CMAKE_CONFIGURE[@]}"
-	cmake --build build
-	cmake --install build
+	cmake_build
 }
 
 # Build Opus
@@ -633,9 +633,7 @@ build_opus() {
 		;;
 	esac
 
-	"${CMAKE_CONFIGURE[@]}" "${opus_cmake_args[@]}"
-	cmake --build build
-	cmake --install build
+	cmake_build "${opus_cmake_args[@]}"
 }
 
 # Build OpusFile
@@ -1034,15 +1032,6 @@ common_setup() {
 	mkdir -p "${PREFIX}/bin"
 	mkdir -p "${PREFIX}/include"
 	mkdir -p "${PREFIX}/lib"
-
-	CMAKE_CONFIGURE=(cmake -S . -B build \
-		-DCMAKE_INSTALL_PREFIX="${PREFIX}" \
-		-DBUILD_SHARED_LIBS="${CMAKE_SHARED}" )
-
-	if [ -n "${CMAKE_TOOLCHAIN}" ]
-	then
-		CMAKE_CONFIGURE+=(-DCMAKE_TOOLCHAIN_FILE="${CMAKE_TOOLCHAIN}")
-	fi
 
 	export CC CXX LD AR RANLIB PKG_CONFIG PKG_CONFIG_PATH PATH CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
 }

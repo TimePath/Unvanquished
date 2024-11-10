@@ -623,18 +623,19 @@ build_opus() {
 	"${download_only}" && return
 
 	cd "${dir_name}"
-	# The default -O2 is dropped when there's user-provided CFLAGS.
+
+	local opus_cmake_args=(-DOPUS_BUILD_PROGRAMS=OFF -DOPUS_BUILD_TESTING=OFF)
+
 	case "${PLATFORM}" in
 	windows-*-*)
 		# With MinGW _FORTIFY_SOURCE (added by configure) can only by used with -fstack-protector enabled.
-		CFLAGS="${CFLAGS} -O2 -D_FORTIFY_SOURCE=0" ./configure --host="${HOST}" --prefix="${PREFIX}" --libdir="${PREFIX}/lib" "${CONFIGURE_SHARED[@]}"
-		;;
-	*)
-		CFLAGS="${CFLAGS} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" --libdir="${PREFIX}/lib" "${CONFIGURE_SHARED[@]}"
+		opus_cmake_args+=(-DCMAKE_C_FLAGS="${CFLAGS} -D_FORTIFY_SOURCE=0")
 		;;
 	esac
-	make
-	make install
+
+	"${CMAKE_CONFIGURE[@]}" "${opus_cmake_args[@]}"
+	cmake --build build
+	cmake --install build
 }
 
 # Build OpusFile

@@ -48,8 +48,7 @@ CXX='false'
 LD='ld'
 AR='ar'
 RANLIB='ranlib'
-CONFIGURE_SHARED=(--disable-shared --enable-static)
-CMAKE_SHARED='OFF'
+SHARED_LIBS='OFF'
 CMAKE_TOOLCHAIN=''
 # Always reset flags, we heavily cross-compile and must not inherit any stray flag
 # from environment.
@@ -139,11 +138,18 @@ download_extract() {
 }
 
 configure_build() {
+	local configure_args=(--disable-shared --enable-static)
+
+	if [ "${USE_SHARED}" = 'ON' ]
+	then
+		configure_args=(--enable-shared --disable-static)
+	fi
+
 	./configure \
 		--host="${HOST}" \
 		--prefix="${PREFIX}" \
 		--libdir="${PREFIX}/lib" \
-		"${CONFIGURE_SHARED[@]}" \
+		"${configure_args[@]}" \
 		"${@}"
 
 	make
@@ -159,7 +165,7 @@ cmake_build() {
 
 	cmake -S . -B build \
 		-DCMAKE_INSTALL_PREFIX="${PREFIX}" \
-		-DBUILD_SHARED_LIBS="${CMAKE_SHARED}" \
+		-DBUILD_SHARED_LIBS="${SHARED_LIBS}" \
 		"${cmake_args[@]}" \
 		"${@}"
 
@@ -536,7 +542,7 @@ build_jpeg() {
 	cd "${dir_name}"
 
 	cmake_build \
-		-DENABLE_SHARED="${CMAKE_SHARED}" \
+		-DENABLE_SHARED="${SHARED_LIBS}" \
 		-DCMAKE_SYSTEM_NAME="${SYSTEM_NAME}" \
 		-DCMAKE_SYSTEM_PROCESSOR="${SYSTEM_PROCESSOR}" \
 		-DWITH_JPEG8=1
@@ -1131,8 +1137,7 @@ common_setup_arch() {
 # the Windows build of Lua is only used in developer gamelogic builds, and Microsoft
 # supports %lld since Visual Studio 2013.
 common_setup_msvc() {
-	CONFIGURE_SHARED=(--enable-shared --disable-static)
-	CMAKE_SHARED='ON'
+	SHARED_LIBS='ON'
 	# Libtool bug prevents -static-libgcc from being set in LDFLAGS
 	CC="${HOST}-gcc -static-libgcc"
 	CXX="${HOST}-g++ -static-libgcc"

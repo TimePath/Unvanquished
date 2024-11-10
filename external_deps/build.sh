@@ -458,25 +458,28 @@ build_jpeg() {
 		;;
 	esac
 
-	local jpeg_cmake_call=(cmake -S . -B build -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
-		-DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_CXX_FLAGS="${CXXFLAGS}" \
-		-DCMAKE_SYSTEM_NAME="${SYSTEM_NAME}" -DCMAKE_SYSTEM_PROCESSOR="${SYSTEM_PROCESSOR}" \
+	local jpeg_cmake_args=(-DCMAKE_SYSTEM_NAME="${SYSTEM_NAME}" \
+		-DCMAKE_SYSTEM_PROCESSOR="${SYSTEM_PROCESSOR}" \
 		-DWITH_JPEG8=1)
 
 	cd "${dir_name}"
 	case "${PLATFORM}" in
 	windows-*-mingw)
-		"${jpeg_cmake_call[@]}" -DCMAKE_TOOLCHAIN_FILE="${SCRIPT_DIR}/../cmake/cross-toolchain-mingw${BITNESS}.cmake" -DENABLE_SHARED=0
+		jpeg_cmake_args+=(-DCMAKE_TOOLCHAIN_FILE="${SCRIPT_DIR}/../cmake/cross-toolchain-mingw${BITNESS}.cmake" \
+			-DENABLE_SHARED=0)
 		;;
 	windows-*-msvc)
-		"${jpeg_cmake_call[@]}" -DCMAKE_TOOLCHAIN_FILE="${SCRIPT_DIR}/../cmake/cross-toolchain-mingw${BITNESS}.cmake" -DENABLE_SHARED=1
+		jpeg_cmake_args+=(-DCMAKE_TOOLCHAIN_FILE="${SCRIPT_DIR}/../cmake/cross-toolchain-mingw${BITNESS}.cmake" \
+			-DENABLE_SHARED=1)
 		;;
 	*)
-		"${jpeg_cmake_call[@]}" -DENABLE_SHARED=0
+		jpeg_cmake_args+=(-DENABLE_SHARED=0)
 		;;
 	esac
-	make -C build
-	make -C build install
+
+	"${CMAKE_CONFIGURE[@]}" "${jpeg_cmake_args[@]}"
+	cmake --build build
+	cmake --install build
 }
 
 # Build WebP

@@ -306,10 +306,59 @@ build_curl() {
 	"${download_only}" && return
 
 	cd "${dir_name}"
-	# The user-provided CFLAGS doesn't drop the default -O2
-	./configure --host="${HOST}" --prefix="${PREFIX}" --libdir="${PREFIX}/lib" --without-ssl --without-libssh2 --without-librtmp --without-libidn2 --without-brotli --without-zstd --disable-file --disable-ldap --disable-crypto-auth --disable-gopher --disable-ftp --disable-tftp --disable-dict --disable-imap --disable-mqtt --disable-smtp --disable-pop3 --disable-telnet --disable-rtsp --disable-threaded-resolver --disable-alt-svc "${CONFIGURE_SHARED[@]}"
-	make
-	make install
+
+	cmake_build \
+		-DBUILD_TESTING=OFF \
+		-DCURL_ENABLE_SSL=OFF \
+		-DENABLE_THREADED_RESOLVER=OFF \
+		-DUSE_LIBIDN2=OFF \
+		-DCURL_BROTLI=OFF \
+		-DCURL_ZLIB=ON \
+		-DCURL_ZSTD=OFF \
+		-DENABLE_UNIX_SOCKETS=OFF \
+		-DCURL_USE_BEARSSL=OFF \
+		-DCURL_USE_GSSAPI=OFF \
+		-DCURL_USE_LIBSSH=OFF \
+		-DCURL_USE_LIBSSH2=OFF \
+		-DCURL_USE_MBEDTLS=OFF \
+		-DCURL_USE_NSS=OFF \
+		-DCURL_USE_OPENSSL=OFF \
+		-DCURL_USE_WOLFSSL=OFF \
+		-DCURL_DISABLE_ALTSVC=ON \
+		-DCURL_DISABLE_COOKIES=ON \
+		-DCURL_DISABLE_CRYPTO_AUTH=ON \
+		-DCURL_DISABLE_DICT=ON \
+		-DCURL_DISABLE_DOH=ON \
+		-DCURL_DISABLE_FILE=ON \
+		-DCURL_DISABLE_FTP=ON \
+		-DCURL_DISABLE_GETOPTIONS=ON \
+		-DCURL_DISABLE_GOPHER=ON \
+		-DCURL_DISABLE_HSTS=ON \
+		-DCURL_DISABLE_HTTP=ON \
+		-DCURL_DISABLE_HTTP_AUTH=ON \
+		-DCURL_DISABLE_IMAP=ON \
+		-DCURL_DISABLE_LDAP=ON \
+		-DCURL_DISABLE_LDAPS=ON \
+		-DCURL_DISABLE_LIBCURL_OPTION=ON \
+		-DCURL_DISABLE_MIME=ON \
+		-DCURL_DISABLE_MQTT=ON \
+		-DCURL_DISABLE_NETRC=ON \
+		-DCURL_DISABLE_NTLM=ON \
+		-DCURL_DISABLE_PARSEDATE=ON \
+		-DCURL_DISABLE_POP3=ON \
+		-DCURL_DISABLE_PROGRESS_METER=ON \
+		-DCURL_DISABLE_PROXY=ON \
+		-DCURL_DISABLE_RTSP=ON \
+		-DCURL_DISABLE_SHUFFLE_DNS=ON \
+		-DCURL_DISABLE_SMB=ON \
+		-DCURL_DISABLE_SMTP=ON \
+		-DCURL_DISABLE_SOCKETPAIR=ON \
+		-DCURL_DISABLE_TELNET=ON \
+		-DCURL_DISABLE_TFTP=ON
+
+		# Already disabled by other options.
+		# -DCURL_USE_OPENLDAP=OFF \
+		# -DCURL_DISABLE_OPENSSL_AUTO_LOAD=ON \
 }
 
 # Build SDL2

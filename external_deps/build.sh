@@ -521,15 +521,10 @@ build_openal() {
 		local dir_name="openal-soft-${OPENAL_VERSION}-bin"
 		local archive_name="${dir_name}.zip"
 		;;
-	macos-*-*|linux-*-*)
+	*)
 		local dir_name="openal-soft-${OPENAL_VERSION}"
 		local archive_name="${dir_name}.tar.bz2"
-		local openal_cmake_call=(cmake -S . -B . -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
-			-DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_CXX_FLAGS="${CXXFLAGS}" \
-			-DCMAKE_BUILD_TYPE=Release -DALSOFT_EXAMPLES=OFF)
-		;;
-	*)
-		log error 'Unsupported platform for OpenAL'
+		local openal_cmake_args=(-DCMAKE_BUILD_TYPE=Release -DALSOFT_EXAMPLES=OFF)
 		;;
 	esac
 
@@ -556,16 +551,19 @@ build_openal() {
 		;;
 	macos-*-*)
 		cd "${dir_name}"
-		"${openal_cmake_call[@]}"
-		make
-		make install
+
+		"${CMAKE_CONFIGURE[@]}"
+		cmake --build build
+		cmake --install build
+
 		install_name_tool -id "@rpath/libopenal.${OPENAL_VERSION}.dylib" "${PREFIX}/lib/libopenal.${OPENAL_VERSION}.dylib"
 		;;
-	linux-*-*)
+	*)
 		cd "${dir_name}"
-		"${openal_cmake_call[@]}" -DLIBTYPE=STATIC 
-		make
-		make install
+
+		"${CMAKE_CONFIGURE[@]}" -DLIBTYPE=STATIC 
+		cmake --build build
+		cmake --install build
 		;;
 	esac
 }

@@ -70,6 +70,7 @@ using bool8_t = uint8_t;
 // animation without needing to know the frame count
 #define RF_FORCENOLOD    0x000400
 #define RF_SWAPCULL      0x000800 // swap CT_FRONT_SIDED and CT_BACK_SIDED
+#define RF_NORENDER 0x001000 // HACK: This is only used to put weapons in correct positions on skeletal models
 
 // refdef flags
 #define RDF_NOWORLDMODEL ( 1 << 0 ) // used for player configuration screen
@@ -156,6 +157,12 @@ enum class refSkeletonType_t
   SK_ABSOLUTE
 };
 
+struct BoneMod {
+	int index;
+	vec3_t translation;
+	quat_t rotation;
+};
+
 struct alignas(16) refSkeleton_t
 {
 	refSkeletonType_t type; // skeleton has been reset
@@ -169,6 +176,12 @@ struct alignas(16) refSkeleton_t
 };
 
 // XreaL END
+
+enum class EntityTag {
+	NONE,
+	ON_TAG,
+	ON_TAG_ROTATED
+};
 
 struct refEntity_t
 {
@@ -210,6 +223,28 @@ struct refEntity_t
 #endif
 
 	int altShaderIndex;
+
+	qhandle_t animationHandle;
+	int startFrame;
+	int endFrame;
+	float lerp;
+	int clearOrigin;
+	qhandle_t animationHandle2;
+	int startFrame2;
+	int endFrame2;
+	float lerp2;
+	int clearOrigin2;
+	float blendLerp;
+	float scale;
+
+	int boundsAdd;
+	vec3_t boundsRotation;
+
+	EntityTag positionOnTag = EntityTag::NONE;
+	int attachmentEntity;
+	std::string tag;
+
+	std::vector<BoneMod> boneMods;
 
 	// KEEP SKELETON AT THE END OF THE STRUCTURE
 	// it is to make a serialization hack for refEntity_t easier

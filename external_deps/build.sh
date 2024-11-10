@@ -189,18 +189,11 @@ build_zlib() {
 	"${download_only}" && return
 
 	cd "${dir_name}"
-	case "${PLATFORM}" in
-	windows-*-*)
-		LOC="${CFLAGS}" make -f win32/Makefile.gcc PREFIX="${HOST}-"
-		make -f win32/Makefile.gcc install BINARY_PATH="${PREFIX}/bin" LIBRARY_PATH="${PREFIX}/lib" INCLUDE_PATH="${PREFIX}/include" SHARED_MODE=1
-		;;
-	*)
-		# The default -O3 is dropped when there's user-provided CFLAGS.
-		CFLAGS="${CFLAGS} -O3" ./configure --prefix="${PREFIX}" --libdir="${PREFIX}/lib" --static --const
-		make
-		make install
-		;;
-	esac
+
+	# The default -O3 is dropped when there's user-provided CFLAGS.
+	"${CMAKE_CONFIGURE[@]}" -DCMAKE_CFLAGS="${CFLAGS} -DZLIB_CONST"
+	cmake --build build
+	cmake --install build
 }
 
 # Build GMP

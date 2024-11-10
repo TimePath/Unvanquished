@@ -184,10 +184,9 @@ build_pkgconfig() {
 	"${download_only}" && return
 
 	cd "${dir_name}"
+
 	# The default -O2 is dropped when there's user-provided CFLAGS.
-	CFLAGS="${CFLAGS} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" --libdir="${PREFIX}/lib" --with-internal-glib
-	make
-	make install
+	CFLAGS="${CFLAGS} -O2" configure_build --with-internal-glib
 }
 
 # Build NASM

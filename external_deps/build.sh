@@ -579,13 +579,14 @@ build_ogg() {
 	"${download_only}" && return
 
 	cd "${dir_name}"
+
 	# This header breaks the vorbis and opusfile Mac builds
 	cat <(echo '#include <stdint.h>') include/ogg/os_types.h > os_types.tmp
 	mv os_types.tmp include/ogg/os_types.h
-	# The user-provided CFLAGS doesn't drop the default -O2
-	./configure --host="${HOST}" --prefix="${PREFIX}" --libdir="${PREFIX}/lib" "${CONFIGURE_SHARED[@]}"
-	make
-	make install
+
+	"${CMAKE_CONFIGURE[@]}"
+	cmake --build build
+	cmake --install build
 }
 
 # Build Vorbis

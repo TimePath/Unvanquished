@@ -49,6 +49,7 @@ LD='ld'
 AR='ar'
 RANLIB='ranlib'
 CONFIGURE_SHARED=(--disable-shared --enable-static)
+CMAKE_SHARED=(-DBUILD_SHARED_LIBS=OFF)
 # Always reset flags, we heavily cross-compile and must not inherit any stray flag
 # from environment.
 CFLAGS=''
@@ -341,10 +342,11 @@ build_sdl2() {
 		;;
 	*)
 		cd "${dir_name}"
-		# The default -O3 is dropped when there's user-provided CFLAGS.
-		CFLAGS="${CFLAGS} -O3" ./configure --host="${HOST}" --prefix="${PREFIX}" --libdir="${PREFIX}/lib" "${CONFIGURE_SHARED[@]}"
-		make
-		make install
+
+		"${CMAKE_CONFIGURE[@]}"
+		cmake --build build
+		cmake --install build
+
 		# Workaround for an SDL2 CMake bug, we need to provide
 		# a bin/ directory even when nothing is used from it.
 		mkdir -p "${PREFIX}/bin"
@@ -1024,6 +1026,9 @@ common_setup() {
 	mkdir -p "${PREFIX}/bin"
 	mkdir -p "${PREFIX}/include"
 	mkdir -p "${PREFIX}/lib"
+	CMAKE_CONFIGURE=(cmake -S . -B build -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
+		-DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_CXX_FLAGS="${CXXFLAGS}" \
+		"${CMAKE_SHARED[@]}" )
 	export CC CXX LD AR RANLIB PKG_CONFIG PKG_CONFIG_PATH PATH CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
 }
 
@@ -1061,6 +1066,7 @@ common_setup_arch() {
 # supports %lld since Visual Studio 2013.
 common_setup_msvc() {
 	CONFIGURE_SHARED=(--enable-shared --disable-static)
+	CMAKE_SHARED=(-DBUILD_SHARED_LIBS=ON)
 	# Libtool bug prevents -static-libgcc from being set in LDFLAGS
 	CC="${HOST}-gcc -static-libgcc"
 	CXX="${HOST}-g++ -static-libgcc"

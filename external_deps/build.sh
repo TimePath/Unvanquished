@@ -1036,7 +1036,6 @@ common_setup() {
 	mkdir -p "${PREFIX}/lib"
 
 	CMAKE_CONFIGURE=(cmake -S . -B build -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
-		-DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_CXX_FLAGS="${CXXFLAGS}" \
 		-DBUILD_SHARED_LIBS="${CMAKE_SHARED}" )
 
 	if [ -n "${CMAKE_TOOLCHAIN}" ]

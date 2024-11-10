@@ -484,8 +484,16 @@ build_png() {
 
 	cd "${dir_name}"
 
-	# The default -O2 is dropped when there's user-provided CFLAGS.
-	cmake_build
+	local png_cmake_args=(-DPNG_SHARED=OFF -DPNG_STATIC=ON)
+
+	if [ "${LIBS_SHARED}" = 'ON' ]
+	then
+		png_cmake_args=(-DPNG_SHARED=ON -DPNG_STATIC=OFF)
+	fi
+
+	cmake_build \
+		-DPNG_EXECUTABLES=OFF \
+		"${png_cmake_args[@]}"
 }
 
 # Build JPEG

@@ -362,7 +362,7 @@ build_curl() {
 		-DCURL_DISABLE_TELNET=ON \
 		-DCURL_DISABLE_TFTP=ON
 
-		# Already disabled by other options.
+		# Already disabled by other options:
 		# -DCURL_USE_OPENLDAP=OFF \
 		# -DCURL_DISABLE_OPENSSL_AUTO_LOAD=ON \
 }

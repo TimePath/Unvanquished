@@ -459,21 +459,14 @@ build_jpeg() {
 		;;
 	esac
 
-	local jpeg_cmake_args=(-DCMAKE_SYSTEM_NAME="${SYSTEM_NAME}" \
+	cd "${dir_name}"
+
+	"${CMAKE_CONFIGURE[@]}" \
+		-DENABLE_SHARED="${CMAKE_SHARED}" \
+		-DCMAKE_SYSTEM_NAME="${SYSTEM_NAME}" \
 		-DCMAKE_SYSTEM_PROCESSOR="${SYSTEM_PROCESSOR}" \
 		-DWITH_JPEG8=1)
 
-	cd "${dir_name}"
-	case "${PLATFORM}" in
-	windows-*-msvc)
-		jpeg_cmake_args+=(-DENABLE_SHARED=1)
-		;;
-	*)
-		jpeg_cmake_args+=(-DENABLE_SHARED=0)
-		;;
-	esac
-
-	"${CMAKE_CONFIGURE[@]}" "${jpeg_cmake_args[@]}"
 	cmake --build build
 	cmake --install build
 }

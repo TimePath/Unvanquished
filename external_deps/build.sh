@@ -138,6 +138,18 @@ download_extract() {
 	extract "${tarball_file}" "${extract_dir}"
 }
 
+configure_build() {
+	./configure \
+		--host="${HOST}" \
+		--prefix="${PREFIX}" \
+		--libdir="${PREFIX}/lib" \
+		"${CONFIGURE_SHARED[@]}" \
+		"${@}"
+
+	make
+	make install
+}
+
 cmake_build() {
 	local cmake_args=()
 	if [ -n "${CMAKE_TOOLCHAIN}" ]

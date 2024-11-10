@@ -158,6 +158,7 @@ configure_build() {
 
 cmake_build() {
 	local cmake_args=()
+
 	if [ -n "${CMAKE_TOOLCHAIN}" ]
 	then
 		cmake_args+=(-DCMAKE_TOOLCHAIN_FILE="${CMAKE_TOOLCHAIN}")

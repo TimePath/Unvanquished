@@ -587,10 +587,20 @@ build_freetype() {
 	"${download_only}" && return
 
 	cd "${dir_name}"
-	# The default -O2 is dropped when there's user-provided CFLAGS.
-	CFLAGS="${CFLAGS} -O2" ./configure --host="${HOST}" --prefix="${PREFIX}" --libdir="${PREFIX}/lib" "${CONFIGURE_SHARED[@]}" --without-bzip2 --without-png --with-harfbuzz=no --with-brotli=no
-	make
-	make install
+
+	cmake_build \
+		-DFT_DISABLE_BROTLI=OFF \
+		-DFT_DISABLE_BZIP2=OFF \
+		-DFT_DISABLE_HARFBUZZ=OFF \
+		-DFT_DISABLE_PNG=OFF \
+		-DFT_DISABLE_ZLIB=OFF \
+		-DFT_ENABLE_ERROR_STRINGS=OFF \
+		-DFT_REQUIRE_BROTLI=OFF \
+		-DFT_REQUIRE_BZIP2=OFF \
+		-DFT_REQUIRE_HARFBUZZ=OFF \
+		-DFT_REQUIRE_PNG=OFF \
+		-DFT_REQUIRE_ZLIB=OFF
+
 	cp -a "${PREFIX}/include/freetype2" "${PREFIX}/include/freetype"
 	mv "${PREFIX}/include/freetype" "${PREFIX}/include/freetype2/freetype"
 }

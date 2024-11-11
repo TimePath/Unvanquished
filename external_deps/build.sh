@@ -49,7 +49,7 @@ LD='ld'
 AR='ar'
 RANLIB='ranlib'
 LIBS_SHARED='OFF'
-LIBS_STATIC='OFF'
+LIBS_STATIC='ON'
 CMAKE_TOOLCHAIN=''
 # Always reset flags, we heavily cross-compile and must not inherit any stray flag
 # from environment.

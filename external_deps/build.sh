@@ -239,7 +239,7 @@ build_zlib() {
 
 	case "${PLATFORM}" in
 		windows-*-*)
-			zlib_cmake_args+=(-DBUILD_LIBS_SHARED=ON)
+			zlib_cmake_args+=(-DBUILD_SHARED_LIBS=ON)
 		;;
 	esac
 

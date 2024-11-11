@@ -49,6 +49,7 @@ LD='ld'
 AR='ar'
 RANLIB='ranlib'
 LIBS_SHARED='OFF'
+LIBS_STATIC='OFF'
 CMAKE_TOOLCHAIN=''
 # Always reset flags, we heavily cross-compile and must not inherit any stray flag
 # from environment.
@@ -550,7 +551,7 @@ build_jpeg() {
 
 	cmake_build \
 		-DENABLE_SHARED="${LIBS_SHARED}" \
-		-DCMAKE_SYSTEM_NAME="${SYSTEM_NAME}" \
+		-DCMAKE_SYSTEM_NAME="${LIBS_STATIC}" \
 		-DCMAKE_SYSTEM_PROCESSOR="${SYSTEM_PROCESSOR}" \
 		-DWITH_JPEG8=1
 }
@@ -1149,6 +1150,7 @@ common_setup_arch() {
 # supports %lld since Visual Studio 2013.
 common_setup_msvc() {
 	LIBS_SHARED='ON'
+	LIBS_STATIC='OFF'
 	# Libtool bug prevents -static-libgcc from being set in LDFLAGS
 	CC="${HOST}-gcc -static-libgcc"
 	CXX="${HOST}-g++ -static-libgcc"

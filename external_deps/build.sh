@@ -777,7 +777,13 @@ build_opus() {
 
 	cd "${dir_name}"
 
-	cmake_build "${opus_cmake_args[@]}"
+	cmake_build "${opus_cmake_args[@]}" \
+		-DOPUS_X86_MAY_HAVE_SSE=ON \
+		-DOPUS_X86_MAY_HAVE_SSE2=ON \
+		-DOPUS_X86_PRESUME_SSE=ON \
+		-DOPUS_X86_PRESUME_SSE2=ON \
+		-DOPUS_X86_MAY_HAVE_SSE4_1=OFF \
+		-DOPUS_X86_MAY_HAVE_AVX2=OFF
 }
 
 # Build OpusFile

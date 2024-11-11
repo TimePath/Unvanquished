@@ -178,6 +178,7 @@ cmake_build() {
 
 	cmake -S . -B build \
 		-DCMAKE_BUILD_TYPE='Release' \
+		-DCMAKE_PREFIX_PATH="${PREFIX}" \
 		-DCMAKE_INSTALL_PREFIX="${PREFIX}" \
 		-DBUILD_SHARED_LIBS="${LIBS_SHARED}" \
 		"${cmake_args[@]}" \

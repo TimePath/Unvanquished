@@ -235,8 +235,6 @@ build_zlib() {
 
 	"${download_only}" && return
 
-	cd "${dir_name}"
-
 	local zlib_cmake_args=(-DCMAKE_C_FLAGS="${CFLAGS} -DZLIB_CONST")
 
 	case "${PLATFORM}" in
@@ -244,6 +242,8 @@ build_zlib() {
 			zlib_cmake_args+=(-DBUILD_LIBS_SHARED=ON)
 		;;
 	esac
+
+	cd "${dir_name}"
 
 	cmake_build "${zlib_cmake_args[@]}"
 }
@@ -259,8 +259,6 @@ build_gmp() {
 		"https://ftp.gnu.org/gnu/gmp/${archive_name}"
 
 	"${download_only}" && return
-
-	cd "${dir_name}"
 
 	case "${PLATFORM}" in
 	windows-*-msvc)
@@ -283,6 +281,8 @@ build_gmp() {
 	*)
 		;;
 	esac
+
+	cd "${dir_name}"
 
 	configure_build "${gmp_configure_args[@]}"
 
@@ -461,6 +461,7 @@ build_glew() {
 	"${download_only}" && return
 
 	cd "${dir_name}"
+
 	case "${PLATFORM}" in
 	windows-*-*)
 		make SYSTEM="linux-mingw${BITNESS}" GLEW_DEST="${PREFIX}" CC="${CC}" AR="${AR}" RANLIB="${RANLIB}" STRIP="${HOST}-strip" LD="${LD}" CFLAGS.EXTRA="${CFLAGS}" LDFLAGS.EXTRA="${LDFLAGS}"
@@ -724,8 +725,6 @@ build_opus() {
 
 	"${download_only}" && return
 
-	cd "${dir_name}"
-
 	local opus_cmake_args=(-DOPUS_BUILD_PROGRAMS=OFF -DOPUS_BUILD_TESTING=OFF)
 
 	case "${PLATFORM}" in
@@ -734,6 +733,8 @@ build_opus() {
 		opus_cmake_args+=(-DCMAKE_C_FLAGS="${CFLAGS} -D_FORTIFY_SOURCE=0")
 		;;
 	esac
+
+	cd "${dir_name}"
 
 	cmake_build "${opus_cmake_args[@]}"
 }

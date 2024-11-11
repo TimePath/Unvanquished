@@ -552,6 +552,19 @@ build_jpeg() {
 		;;
 	esac
 
+	local jpeg_cmake_args=()
+
+	case "${PLATFORM}" in
+	windows-*-*)
+		;;
+	*)
+		# Workaround for: undefined reference to `log10'
+		# The CMakeLists.txt file only does -lm if UNIX,
+		# but UNIX may not be true on Linux.
+		jpeg_cmake_args=(-DUNIX=True)
+		;;
+	esac
+		
 	cd "${dir_name}"
 
 	cmake_build \
@@ -559,7 +572,8 @@ build_jpeg() {
 		-DENABLE_STATIC="${LIBS_STATIC}" \
 		-DCMAKE_SYSTEM_NAME="${SYSTEM_NAME}" \
 		-DCMAKE_SYSTEM_PROCESSOR="${SYSTEM_PROCESSOR}" \
-		-DWITH_JPEG8=1
+		-DWITH_JPEG8=1 \
+		"${jpeg_cmake_args[@]}"
 }
 
 # Build WebP

@@ -753,6 +753,16 @@ build_vorbis() {
 
 	cd "${dir_name}"
 
+	case "${PLATFORM}" in
+	windows-*-msvc)
+		# Workaround a build issue on MinGW:
+		# See: https://github.com/microsoft/vcpkg/issues/22990
+		# and: https://github.com/microsoft/vcpkg/pull/23761
+		ls win32/vorbis.def win32/vorbisenc.def win32/vorbisfile.def \
+		| xargs -I{} -P3 sed -e 's/LIBRARY//' -i {}
+		;;
+	esac
+
 	cmake_build
 }
 

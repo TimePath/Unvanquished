@@ -141,9 +141,20 @@ download_extract() {
 configure_build() {
 	local configure_args=(--disable-shared --enable-static)
 
+	configure_args=()
+
 	if [ "${LIBS_SHARED}" = 'ON' ]
 	then
-		configure_args=(--enable-shared --disable-static)
+		configure_args+=(--enable-shared)
+	else
+		configure_args+=(--disable-shared)
+	fi
+
+	if [ "${LIBS_STATIC}" = 'ON' ]
+	then
+		configure_args+=(--enable-static)
+	else
+		configure_args+=(--disable-static)
 	fi
 
 	./configure \

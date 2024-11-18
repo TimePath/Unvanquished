@@ -771,18 +771,21 @@ build_opus() {
 
 	"${download_only}" && return
 
-	local opus_cmake_args=(-DOPUS_BUILD_PROGRAMS=OFF -DOPUS_BUILD_TESTING=OFF)
+	local opus_cmake_args=()
 
 	case "${PLATFORM}" in
 	windows-*-*)
-		# With MinGW _FORTIFY_SOURCE (added by configure) can only by used with -fstack-protector enabled.
-		opus_cmake_args+=(-DCMAKE_C_FLAGS="${CFLAGS} -D_FORTIFY_SOURCE=0")
+		# With MinGW, we would get this error:
+		# undefined reference to `__stack_chk_guard'
+		opus_cmake_args+=(-DOPUS_FORTIFY_SOURCE=OFF -DOPUS_STACK_PROTECTOR=OFF)
 		;;
 	esac
 
 	cd "${dir_name}"
 
 	cmake_build "${opus_cmake_args[@]}" \
+		-DOPUS_BUILD_PROGRAMS=OFF \
+		-DOPUS_BUILD_TESTING=OFF \
 		-DOPUS_X86_MAY_HAVE_SSE=ON \
 		-DOPUS_X86_MAY_HAVE_SSE2=ON \
 		-DOPUS_X86_PRESUME_SSE=ON \

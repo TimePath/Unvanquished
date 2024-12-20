@@ -415,13 +415,24 @@ BuildTangents
 Compute Tangent and Bitangent vectors from the IQM 4-float input data
 =================
 */
-void BuildTangents( int n, float *input, float *normals, float *tangents,
-		    float *bitangents )
+static void BuildTangents( int n, float *input,
+	float *normals, float *tangents, float *bitangents,
+	const char *mod_name )
 {
-	int i;
-	vec3_t crossProd;
+	int nanCount = 0;
 
-	for( i = 0; i < n; i++ ) {
+	for ( int i = 0; i < n; i++ ) {
+		for ( int j = 0; j < 4; j++ )
+		{
+			if ( !Math::IsFinite( input[ j ] ) )
+			{
+				Log::Debug( "IQM model “%s” has NaN in tangents[%d][%d].", mod_name, i, j );
+				input[ j ] = 0.0f;
+				nanCount++;
+			}
+		}
+
+		vec3_t crossProd;
 		VectorCopy( input, tangents );
 		CrossProduct( normals, input, crossProd );
 		VectorScale( crossProd, input[ 3 ], bitangents );
@@ -430,6 +441,11 @@ void BuildTangents( int n, float *input, float *normals, float *tangents,
 		normals    += 3;
 		tangents   += 3;
 		bitangents += 3;
+	}
+
+	if ( nanCount )
+	{
+		Log::Warn( "IQM Model “%s” contains %d NaN in tangents.", nanCount, mod_name );
 	}
 }
 
@@ -719,9 +735,9 @@ bool R_LoadIQModel( model_t *mod, const void *buffer, int filesize,
 			break;
 		case IQM_TANGENT:
 			BuildTangents( header->num_vertexes,
-				       ( float* )IQMPtr( header, vertexarray->offset ),
-				       IQModel->normals, IQModel->tangents,
-				       IQModel->bitangents );
+				( float* )IQMPtr( header, vertexarray->offset ),
+				IQModel->normals, IQModel->tangents, IQModel->bitangents,
+				mod_name );
 			break;
 		case IQM_TEXCOORD:
 			for( int j = 0; j < n; j++ ) {
